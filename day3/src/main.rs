@@ -30,6 +30,26 @@ impl Shape {
             id:0
         }
     }
+
+    fn from_text(data: &str) -> Shape {
+        let mut shape = Shape::new();
+            lazy_static! {
+            //   1      2   3    4  5
+            // #1220 @ 258,186: 10x29
+            static ref RE: Regex = Regex::new(r"^#(\d+) @ (\d+),(\d+): (\d+)x(\d+)").unwrap();
+        }
+
+        let captures = RE.captures(data).unwrap();
+        shape.id = captures.get(1).unwrap().as_str().parse().unwrap();
+        shape.left = captures.get(2).unwrap().as_str().parse().unwrap();
+        shape.top = captures.get(3).unwrap().as_str().parse().unwrap();
+        shape.width = captures.get(4).unwrap().as_str().parse().unwrap();
+        shape.height = captures.get(5).unwrap().as_str().parse().unwrap();
+        shape.right = shape.left + shape.width;
+        shape.bottom = shape.top + shape.height;
+
+        shape
+    }
 }
 
 struct Coverage {
@@ -123,31 +143,12 @@ fn read_input(file_name: &str) -> BufReader<File> {
     BufReader::new(file)
 }
 
-fn parse_line(row: &String, shape: &mut Shape) {
-    lazy_static! {
-        //   1      2   3    4  5
-        // #1220 @ 258,186: 10x29
-        static ref RE: Regex = Regex::new(r"^#(\d+) @ (\d+),(\d+): (\d+)x(\d+)").unwrap();
-    }
-
-    let captures = RE.captures(row).unwrap();
-    shape.id = captures.get(1).unwrap().as_str().parse().unwrap();
-    shape.left = captures.get(2).unwrap().as_str().parse().unwrap();
-    shape.top = captures.get(3).unwrap().as_str().parse().unwrap();
-    shape.width = captures.get(4).unwrap().as_str().parse().unwrap();
-    shape.height = captures.get(5).unwrap().as_str().parse().unwrap();
-    shape.right = shape.left + shape.width;
-    shape.bottom = shape.top + shape.height;
-}
-
 fn main() {
     let line_buffer = read_input("/Users/bdhowe/git/aoc2018/day3/input.txt");
     let mut coverage: Coverage = Coverage::new();
 
     for line in line_buffer.lines() {
-        let mut shape = Shape::new();
-        parse_line(&line.unwrap(), &mut shape);
-        coverage.add(shape);
+        coverage.add(Shape::from_text(&line.unwrap()));
     }
 
     println!("Covered twice: {}", coverage.count_covered_twice());
@@ -161,9 +162,7 @@ fn shape_checker() {
     let mut coverage: Coverage = Coverage::new();
 
     for line in line_buffer.lines() {
-        let mut shape = Shape::new();
-        parse_line(&line.unwrap(), &mut shape);
-        coverage.add(shape);
+        coverage.add(Shape::from_text(&line.unwrap()));
     }
 
     let twice_covered = coverage.count_covered_twice();
